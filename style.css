@@ -53,3 +53,14 @@
 @media print{.worksheet-summary,.worksheet-question .submit-row{display:none}.worksheet-question{padding:18px 0;border-bottom:1px solid #ccc}.worksheet-question .feedback{break-inside:auto}}
 
 .worksheet-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}@media(max-width:640px){.worksheet-toolbar .actions{gap:6px}.worksheet-toolbar .btn{font-size:10px;padding:6px 9px}}
+
+.writing-guide,.concept-recap{margin-top:24px;padding:23px;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+.writing-guide h4,.concept-recap h4{font-size:15px;line-height:1.8;margin:0 0 13px}
+.writing-guide h4:not(:first-child){margin-top:23px}
+.keyword-definitions{margin:0;display:grid;gap:12px}.keyword-definitions>div{display:grid;grid-template-columns:minmax(85px,150px) minmax(0,1fr);gap:13px}
+.keyword-definitions dt{font-weight:700;color:var(--green);font-size:12px;overflow-wrap:anywhere}.keyword-definitions dd{margin:0;font-size:12px;line-height:1.95;overflow-wrap:anywhere}
+.answer-outline{margin:0;padding-left:21px;font-size:12px;line-height:2}.answer-outline li{padding-left:4px;margin:7px 0}
+.concept-recap{background:var(--surface)}.concept-recap .recap-definition{background:var(--pale);padding:14px 17px;border-radius:6px;font-size:13px;font-weight:600;line-height:1.9}
+.concept-recap ul{padding-left:20px;margin:13px 0;font-size:12px;line-height:2}.concept-recap li{margin:7px 0;overflow-wrap:anywhere}.concept-recap h5{font-size:12px;margin:20px 0 7px}
+.essay-hint{margin:0 0 18px}.keyword-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}.keyword-chips span{padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--pale);color:var(--green);font-size:12px;font-weight:600}
+@media(max-width:640px){.writing-guide,.concept-recap{padding:17px}.keyword-definitions>div{grid-template-columns:1fr;gap:4px}.keyword-definitions{gap:15px}.writing-guide h4,.concept-recap h4{font-size:14px}.keyword-chips span{font-size:11px}}

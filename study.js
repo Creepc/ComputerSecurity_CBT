@@ -13,7 +13,7 @@ export function checkShort(q, text){
   return [q.answer,...(q.acceptedAnswers||[])].some(a=>compare(a)===compare(text));
 }
 export function questionRevision(q){return Number.isInteger(q?.revision)&&q.revision>0?q.revision:1;}
-export function emptyWorksheetDraft(q){return {revision:questionRevision(q),choice:null,text:'',revealed:false,graded:false,score:0,rubric:[],accepted:false};}
+export function emptyWorksheetDraft(q){return {revision:questionRevision(q),choice:null,text:'',revealed:false,graded:false,score:0,rubric:[],accepted:false,hintVisible:false};}
 export function worksheetHasAnswer(q,draft){return q.options?.length?Number.isInteger(draft.choice)&&draft.choice>=0&&draft.choice<q.options.length:typeof draft.text==='string'&&draft.text.trim().length>0;}
 export function evaluateWorksheet(q,draft,finalizeEssay=false){
  const next={...draft,rubric:[...(draft.rubric||[])],revealed:true,graded:false,score:0};
@@ -30,6 +30,7 @@ export function sanitizeWorksheetDraft(q,raw){
  next.rubric=Array.isArray(raw.rubric)?[...new Set(raw.rubric.filter(n=>Number.isInteger(n)&&n>=0&&n<(q.rubric?.length||0)))]:[];
  next.accepted=q.type==='short'&&raw.accepted===true;
  next.revealed=raw.revealed===true;
+ next.hintVisible=q.type==='essay'&&raw.hintVisible===true;
  if(raw.graded===true&&worksheetHasAnswer(q,next))return {...evaluateWorksheet(q,next,true),revealed:next.revealed};
  return next;
 }

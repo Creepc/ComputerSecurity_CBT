@@ -11,6 +11,7 @@ const allConceptIds = new Set();
 const prompts = new Map();
 const types = new Map();
 const MIN_QUESTIONS = Number(process.env.MIN_QUESTIONS || 300);
+let writingGuideCount = 0;
 // Reviewed against the actual slide text: covers, outlines, learning goals and closing/blank slides.
 // Sparse text alone is not evidence that a slide lacks testable content.
 const structuralSlides = new Map([
@@ -38,6 +39,20 @@ function stringArray(value, label, { required = false } = {}) {
     return false;
   }
   return true;
+}
+function writingGuide(value,label){
+  if(!value||typeof value!=='object'||Array.isArray(value)){fail(`${label}: 서술형 writingGuide가 필요합니다.`);return;}
+  if(!Array.isArray(value.keywords)||value.keywords.length<2){fail(`${label}: 뜻을 설명한 핵심 키워드가 2개 이상 필요합니다.`);}
+  else{
+    const terms=new Set();
+    value.keywords.forEach((item,index)=>{
+      if(!item||typeof item!=='object'||!text(item.term)||!text(item.explanation)){fail(`${label}: 키워드 ${index+1}에 term과 explanation이 필요합니다.`);return;}
+      const term=item.term.normalize('NFKC').trim().replace(/\s+/g,' ');if(terms.has(term))fail(`${label}: 핵심 키워드 ${item.term}가 중복됩니다.`);terms.add(term);
+      if(normalized(item.term)===normalized(item.explanation))fail(`${label}: 키워드 ${item.term}의 뜻을 풀어 설명해야 합니다.`);
+    });
+  }
+  if(stringArray(value.answerOutline,`${label} answerOutline`,{required:true})&&value.answerOutline.length<2)fail(`${label}: 실제 내용을 담은 답안 구성 단계가 2개 이상 필요합니다.`);
+  writingGuideCount++;
 }
 function slideRefs(value, label, total) {
   if (!Array.isArray(value) || !value.length) {
@@ -176,7 +191,7 @@ for (let chapter = 1; chapter <= 4; chapter++) {
       if (Array.isArray(question.options) && question.options.length !== 0) fail(`${label}: 단답형·서술형의 options는 빈 배열이어야 합니다.`);
       if (!text(question.answer)) fail(`${label}: 모범답안 문자열이 없습니다.`);
       if (question.acceptedAnswers !== undefined) stringArray(question.acceptedAnswers, `${label} acceptedAnswers`);
-      if (question.type === 'essay') stringArray(question.rubric, `${label} rubric`, { required: true });
+      if (question.type === 'essay') {stringArray(question.rubric, `${label} rubric`, { required: true });writingGuide(question.writingGuide,label);}
       else if (question.rubric !== undefined) stringArray(question.rubric, `${label} rubric`);
     }
   }
@@ -226,7 +241,7 @@ if (fs.existsSync(path.join(root, 'data/review-log.json'))) {
   }
 }
 
-report.totals = { chapters: report.chapters.length, concepts: allConceptIds.size, questions: allQuestionIds.size, byType: Object.fromEntries(types), minimumQuestions: MIN_QUESTIONS };
+report.totals = { chapters: report.chapters.length, concepts: allConceptIds.size, questions: allQuestionIds.size, byType: Object.fromEntries(types), minimumQuestions: MIN_QUESTIONS, essayWritingGuides: writingGuideCount };
 report.totals.slides = report.chapters.reduce((totals, entry) => ({
   all: totals.all + entry.slideCount,
   directlyReferenced: totals.directlyReferenced + entry.questionSourceSlides.length,
@@ -244,6 +259,7 @@ for (const entry of report.chapters) {
   console.log(`${entry.chapter}장 ${entry.title}: ${entry.concepts}개 개념, ${entry.questions}개 문제 | 문항 출처 ${entry.questionSourceSlides.length}/${entry.slideCount}장 (${entry.questionSlideCoverage ?? 0}%)`);
   if (entry.slidesWithoutDirectQuestion.length) console.log(`  직접 문항 없는 슬라이드(검토용): ${entry.slidesWithoutDirectQuestion.join(', ')}`);
 }
+console.log(`서술형 키워드·답안 구성 가이드: ${writingGuideCount}개`);
 console.log(`합계: 개념 ${allConceptIds.size}개 / 문제 ${allQuestionIds.size}개 / 유형 ${JSON.stringify(Object.fromEntries(types))}`);
 console.log(`내용 슬라이드 문항 출처 연결: ${report.totals.slides.directlyReferencedContent}/${report.totals.slides.content}장 (표지·목차·학습목표·마지막장 제외)`);
 for (const message of warnings) console.warn(`검토: ${message}`);
