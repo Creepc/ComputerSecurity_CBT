@@ -1,0 +1,11 @@
+{
+  "name": "computer-security-midterm-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "python -m http.server 4175 --bind 127.0.0.1",
+    "test": "node scripts/validate.mjs && node --test tests/*.test.mjs",
+    "build": "node scripts/build.mjs"
+  }
+}
