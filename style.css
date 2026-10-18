@@ -40,3 +40,16 @@
 @media print{.chapter-reading-bar{display:none}.chapter-reader{padding:0}.chapter-text{padding:16px 0}.chapter-text h2,.chapter-text h3{break-after:avoid}.chapter-text .notice{color:black;background:white;border-color:#ccc}.chapter-course-grid{display:block}}
 
 .chapter-backlinks{display:flex;flex-wrap:wrap;gap:12px 24px;margin-bottom:22px}.chapter-backlinks .back-link{margin-bottom:0}
+
+.worksheet-summary{padding:14px 20px;margin-bottom:18px;font-size:12px;color:var(--green);position:sticky;top:10px;z-index:8;box-shadow:0 4px 16px #00000008}
+.worksheet-list{display:grid;gap:24px}
+.worksheet-question{padding:28px;scroll-margin-top:72px;min-width:0}
+.worksheet-question .question-prompt{font-size:18px;margin:22px 0;overflow-wrap:anywhere}
+.worksheet-answer{min-height:120px;display:block;margin-top:8px}
+.worksheet-question .feedback{scroll-margin-top:75px}
+.worksheet-question .answer-key{font-size:14px;line-height:1.9;padding:15px 18px;background:var(--pale);border-radius:8px;margin-bottom:19px}
+.worksheet-question .source{display:none}
+@media(max-width:640px){.worksheet-question{padding:20px 17px}.worksheet-question .question-prompt{font-size:16px}.worksheet-summary{padding:12px 15px;font-size:11px}.worksheet-question .submit-row{align-items:stretch}.worksheet-question .submit-row .btn{white-space:normal}.worksheet-question .feedback .btn{white-space:normal}.worksheet-list{gap:17px}}
+@media print{.worksheet-summary,.worksheet-question .submit-row{display:none}.worksheet-question{padding:18px 0;border-bottom:1px solid #ccc}.worksheet-question .feedback{break-inside:auto}}
+
+.worksheet-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}@media(max-width:640px){.worksheet-toolbar .actions{gap:6px}.worksheet-toolbar .btn{font-size:10px;padding:6px 9px}}

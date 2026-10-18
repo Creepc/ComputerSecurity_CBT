@@ -1,7 +1,7 @@
 export const STORAGE_KEY = 'security-midterm-v1';
 export const TYPES = {mcq:'객관식',short:'단답형',essay:'서술형',ox:'O / X'};
 export const CHAPTER_TITLES = ['','정보 보안의 세계','시스템 보안','네트워크 보안','웹 보안'];
-export function emptyState(){return {version:1,attempts:{},bookmarks:[],learned:[],notes:{},exam:null,examHistory:[],theme:'light'};}
+export function emptyState(){return {version:1,attempts:{},bookmarks:[],learned:[],notes:{},worksheet:{},exam:null,examHistory:[],theme:'light'};}
 export function normalize(text){return String(text).normalize('NFKC').toLowerCase().replace(/(^|[\s,;:(])[-−–](?=\d)/gu,'$1음수').replace(/[\s\p{P}\p{S}]/gu,'');}
 export function normalizeCode(text,caseSensitive=false){
   const value=String(text).normalize('NFKC').replace(/[–—−]/g,'-').replace(/->/g,'→').replace(/<-/g,'←').trim().replace(/\s+/g,' ').replace(/\s*([→←])\s*/g,'$1');
@@ -13,6 +13,26 @@ export function checkShort(q, text){
   return [q.answer,...(q.acceptedAnswers||[])].some(a=>compare(a)===compare(text));
 }
 export function questionRevision(q){return Number.isInteger(q?.revision)&&q.revision>0?q.revision:1;}
+export function emptyWorksheetDraft(q){return {revision:questionRevision(q),choice:null,text:'',revealed:false,graded:false,score:0,rubric:[],accepted:false};}
+export function worksheetHasAnswer(q,draft){return q.options?.length?Number.isInteger(draft.choice)&&draft.choice>=0&&draft.choice<q.options.length:typeof draft.text==='string'&&draft.text.trim().length>0;}
+export function evaluateWorksheet(q,draft,finalizeEssay=false){
+ const next={...draft,rubric:[...(draft.rubric||[])],revealed:true,graded:false,score:0};
+ if(!worksheetHasAnswer(q,next))return next;
+ if(q.type==='essay'){next.graded=finalizeEssay;next.score=finalizeEssay?next.rubric.length/(q.rubric?.length||1):0;}
+ else{next.graded=true;next.score=q.options?.length?(next.choice===q.answer?1:0):(next.accepted||checkShort(q,next.text)?1:0);}
+ return next;
+}
+export function sanitizeWorksheetDraft(q,raw){
+ if(!raw||typeof raw!=='object'||raw.revision!==questionRevision(q))return null;
+ const next=emptyWorksheetDraft(q);
+ if(Number.isInteger(raw.choice)&&raw.choice>=0&&raw.choice<(q.options?.length||0))next.choice=raw.choice;
+ next.text=typeof raw.text==='string'?raw.text.slice(0,12000):'';
+ next.rubric=Array.isArray(raw.rubric)?[...new Set(raw.rubric.filter(n=>Number.isInteger(n)&&n>=0&&n<(q.rubric?.length||0)))]:[];
+ next.accepted=q.type==='short'&&raw.accepted===true;
+ next.revealed=raw.revealed===true;
+ if(raw.graded===true&&worksheetHasAnswer(q,next))return {...evaluateWorksheet(q,next,true),revealed:next.revealed};
+ return next;
+}
 export function acknowledgeRevision(exam,q){
   exam.revisions??={};exam.revisions[q.id]=questionRevision(q);
   exam.pendingRevisionIds=(exam.pendingRevisionIds||[]).filter(id=>id!==q.id);
@@ -55,6 +75,7 @@ export function sanitizeState(raw, questions, concepts){
     }
     if(s.exam.pendingRevisionIds.length&&s.exam.status==='done')s.exam.status='review';
   }
+  if(raw.worksheet&&typeof raw.worksheet==='object'&&!Array.isArray(raw.worksheet))for(const [id,draft] of Object.entries(raw.worksheet))if(qs.has(id)){const value=sanitizeWorksheetDraft(questionMap.get(id),draft);if(value)s.worksheet[id]=value;}
   return s;
 }
 export function recordAttempt(state,q,answer,score,selfGraded=false){

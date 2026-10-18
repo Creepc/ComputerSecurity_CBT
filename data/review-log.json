@@ -1,14 +1,14 @@
 {
-  "version": "20261018-r2",
+  "version": "20261018-r4",
   "date": "2026-10-18",
   "reviewedFiles": 4,
   "reviewedSlides": 244,
   "baselineQuestions": 398,
   "currentQuestions": 446,
   "addedQuestions": 48,
-  "revisedQuestions": 49,
-  "updatedExistingQuestions": 68,
-  "updatedConcepts": 19,
+  "revisedQuestions": 50,
+  "updatedExistingQuestions": 283,
+  "updatedConcepts": 149,
   "changes": [
     {
       "title": "사건 해설과 CIA 피해 판정 정정",
@@ -87,6 +87,21 @@
         "q4-058",
         "q4-070"
       ]
+    },
+    {
+      "title": "장별 문제를 한 페이지에서 스크롤하며 풀이",
+      "description": "장별 모든 문제와 답안 입력을 펼쳐 두고, 각 문항 바로 아래에서 정답·선택지 해설·서술형 자기평가를 확인합니다. 전체 해설 펼치기와 개별 다시 풀기를 지원하며 작성 중인 답안도 저장합니다.",
+      "questionIds": []
+    },
+    {
+      "title": "개념과 해설을 직접적인 학습 문장으로 정리",
+      "description": "강의 쪽수·자료 오류 지적·추상적인 주의를 걷어내고 정의, 작동 원리와 구분 기준을 직접 설명합니다. 에니그마·Bombe·콜로서스는 각 장치의 역할과 해독 대상을 비교하고, 자명한 반복 문제는 공급망 원리를 묻도록 보완했습니다.",
+      "questionIds": [
+        "q1-046",
+        "q1-068",
+        "q3-056",
+        "q4-036"
+      ]
     }
   ],
   "references": [
@@ -111,5 +126,7 @@
       "url": "https://www.nccoe.nist.gov/publication/1800-26/VolA/index.html"
     }
   ],
-  "enhancedShortExplanations": 35
+  "enhancedShortExplanations": 35,
+  "wordingReviewedConcepts": 149,
+  "wordingReviewedQuestions": 446
 }
