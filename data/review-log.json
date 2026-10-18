@@ -1,0 +1,115 @@
+{
+  "version": "20261018-r2",
+  "date": "2026-10-18",
+  "reviewedFiles": 4,
+  "reviewedSlides": 244,
+  "baselineQuestions": 398,
+  "currentQuestions": 446,
+  "addedQuestions": 48,
+  "revisedQuestions": 49,
+  "updatedExistingQuestions": 68,
+  "updatedConcepts": 19,
+  "changes": [
+    {
+      "title": "사건 해설과 CIA 피해 판정 정정",
+      "description": "자동 클릭의 검색 지표 조작을 비밀번호 재사용 해설과 분리했습니다. 명단 유출, 파일의 무단 암호화, 서비스 중단이 영향을 주는 보안 속성을 구별했습니다.",
+      "questionIds": [
+        "q1-015",
+        "q1-057"
+      ]
+    },
+    {
+      "title": "권한·접근 규칙·로그 표의 세부 보강",
+      "description": "NGINX의 첫 일치 규칙, NTFS 기본 권한의 범위, Apache 로그 기호의 대소문자, XDMCP와 X11 포트 구분을 직접 묻는 문제와 교정 설명을 추가했습니다.",
+      "questionIds": [
+        "q2-137",
+        "q2-138",
+        "q2-140",
+        "q2-145"
+      ]
+    },
+    {
+      "title": "네트워크의 계산과 인증 절차 보강",
+      "description": "케이블 성능 표의 단위, 클래스 기반 주소 계산, 출발지 MAC 학습, TCP 정상 종료와 WEP 공유 키 인증의 네 단계를 구체적으로 평가합니다.",
+      "questionIds": [
+        "q3-101",
+        "q3-104",
+        "q3-105",
+        "q3-112"
+      ]
+    },
+    {
+      "title": "웹 응답·메서드·경로·실행 위치 보강",
+      "description": "HTTP 상태 코드 다섯 범주, OPTIONS와 TRACE, SQL 조건식, 상대 경로, 리버스 연결 순서와 쿠키 표시·외부 전송의 차이를 보완했습니다.",
+      "questionIds": [
+        "q4-096",
+        "q4-098",
+        "q4-101",
+        "q4-103"
+      ]
+    },
+    {
+      "title": "서술형의 숨은 채점 조건 제거",
+      "description": "발문에 없는 대응책·특정 예시를 추가 배점으로 요구하던 항목을 수정했습니다. 올바른 다른 예시와 대책도 인정하며, 새로 추가한 문제의 루브릭도 다시 대조했습니다.",
+      "questionIds": [
+        "q4-060",
+        "q4-063",
+        "q3-077"
+      ]
+    },
+    {
+      "title": "단답의 기호·동의어·유형 구분 개선",
+      "description": "경로의 /와 .., 명령 옵션의 -, 식별자의 _, 조회 화살표와 숫자 부호를 구분합니다. 교수님 양식의 모의고사는 단일 답안형을 우선 선택하고, 복합 단답은 요구한 항목을 모두 쓰도록 안내합니다.",
+      "questionIds": [
+        "q2-102",
+        "q3-048",
+        "q3-066",
+        "q4-058"
+      ]
+    },
+    {
+      "title": "역사 자료와 과거 제품 설명의 시점 구분",
+      "description": "강의의 인물·장치·작품·사건 연결과 초기 모바일 구조를 보강했습니다. 잘못된 최초 연도, 과거 그룹·런타임 설명을 현재의 보편적 규칙으로 외우지 않도록 구별했습니다.",
+      "questionIds": [
+        "q1-068",
+        "q1-072",
+        "q2-147"
+      ]
+    },
+    {
+      "title": "단답형 정답의 근거와 계산 과정 보강",
+      "description": "35개 기존 단답형에 용어의 뜻, 지문의 판단 단서, 유사 개념과의 차이와 계산 과정을 덧붙였습니다. 이진수 변환과 상위 경로 정규화도 정답에 도달하는 순서로 설명합니다.",
+      "questionIds": [
+        "q1-047",
+        "q2-104",
+        "q3-045",
+        "q3-066",
+        "q4-058",
+        "q4-070"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "title": "Apache 로그 포맷",
+      "url": "https://httpd.apache.org/docs/2.4/mod/mod_log_config.html"
+    },
+    {
+      "title": "NGINX 주소 접근 규칙",
+      "url": "https://nginx.org/en/docs/http/ngx_http_access_module.html"
+    },
+    {
+      "title": "Microsoft 파일 권한",
+      "url": "https://learn.microsoft.com/en-us/dotnet/api/system.security.accesscontrol.filesystemrights"
+    },
+    {
+      "title": "X.Org XDMCP 명세",
+      "url": "https://www.x.org/releases/current/doc/libXdmcp/xdmcp.pdf"
+    },
+    {
+      "title": "NIST 랜섬웨어와 데이터 무결성",
+      "url": "https://www.nccoe.nist.gov/publication/1800-26/VolA/index.html"
+    }
+  ],
+  "enhancedShortExplanations": 35
+}

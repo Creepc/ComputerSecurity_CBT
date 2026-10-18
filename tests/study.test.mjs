@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   emptyState, normalize, checkShort, shuffle, sanitizeState, recordAttempt,
-  selectExam, questionPoints, examScore, conceptProgress
+  selectExam, questionPoints, examScore, conceptProgress, normalizeCode, questionRevision, acknowledgeRevision
 } from '../study.js';
 
 const concepts = [1,2,3,4].map(chapter => ({id:`c${chapter}`,chapter}));
 const questions = concepts.flatMap(concept => Object.entries({essay:12,short:6,mcq:24,ox:7}).flatMap(([type,count]) =>
   Array.from({length:count},(_,i) => ({
     id:`q${concept.chapter}-${type}-${i}`, chapter:concept.chapter, conceptId:concept.id, type,
+    ...(type==='short'?{shortForm:i%2===0?'multi-part':'single'}:{}),
     options:['mcq','ox'].includes(type) ? Array.from({length:type==='mcq'?4:2},(_,j)=>({text:`선택지 ${j}`,explanation:`개념 ${j}`})) : [],
     answer:['mcq','ox'].includes(type) ? 1 : type==='short' ? '버퍼 오버플로우' : '개념과 원리 및 대응책',
     acceptedAnswers:type==='short'?['Buffer Overflow','BOF']:[],
@@ -22,7 +23,8 @@ function savedExam(overrides={}) {
   const choice=find('mcq'), essay=find('essay'), short=find('short');
   return {
     ids:[choice.id,essay.id,short.id], answers:{[choice.id]:1,[essay.id]:'설명한 답안',[short.id]:'BOF'},
-    grades:{},rubrics:{},deadline:1900000000000,status:'active',index:1,mode:'mixed',started:1899997000000,
+    grades:{},rubrics:{},revisions:{[choice.id]:1,[essay.id]:1,[short.id]:1},pendingRevisionIds:[],revisionDrafts:{},
+    deadline:1900000000000,status:'active',index:1,mode:'mixed',started:1899997000000,
     ...overrides
   };
 }
@@ -171,4 +173,108 @@ test('기록 함수는 유효 점수 범위 밖의 값도 0~1 사이의 유한 �
   recordAttempt(s,q,'음수',-1);assert.equal(s.attempts[q.id].score,0);
   recordAttempt(s,q,'비정상 숫자',NaN);assert.ok(Number.isFinite(s.attempts[q.id].score));
   assert.equal(s.attempts[q.id].correct,false);
+});
+
+test('교수 양식 단답은 범위 안 단일답을 우선하고 없을 때 복합답을 사용한다',()=>{
+  for(let seed=1;seed<=20;seed++)for(const chapter of ['all','1','2','3','4']) {
+    const ids=selectExam(questions,'mixed',chapter,rng(seed));
+    const short=ids.map(id=>byId.get(id)).find(q=>q.type==='short');
+    assert.equal(short.shortForm,'single');
+  }
+  const onlyMultipart=questions.filter(q=>q.type!=='short'||q.shortForm==='multi-part');
+  const fallback=selectExam(onlyMultipart,'mixed','4',rng()).map(id=>byId.get(id)).find(q=>q.type==='short');
+  assert.equal(fallback.shortForm,'multi-part');assert.equal(fallback.chapter,4);
+  const limited=questions.filter(q=>q.type!=='short'||(q.chapter===1&&Number(q.id.split('-').at(-1))<4));
+  const written=selectExam(limited,'written','1',rng()).map(id=>byId.get(id)).filter(q=>q.type==='short');
+  assert.equal(written.length,4);assert.ok(written.some(q=>q.shortForm==='single'));assert.ok(written.some(q=>q.shortForm==='multi-part'));
+});
+
+test('경로 단답은 슬래시·상위 경로·점·대소문자를 보존한다',()=>{
+  const q={answer:'/config.ini',acceptedAnswers:[],matchMode:'code',caseSensitive:true};
+  assert.equal(checkShort(q,' /config.ini '),true);
+  for(const answer of ['config.ini','../../config.ini','/config/ini','/CONFIG.INI','configini'])assert.equal(checkShort(q,answer),false,answer);
+});
+
+test('명령 단답은 공백 폭과 인쇄용 대시는 허용하고 옵션 기호·토큰은 유지한다',()=>{
+  const q={answer:'netstat -an',acceptedAnswers:[],matchMode:'code'};
+  for(const answer of [' NETSTAT   -an ','netstat –an','netstat\t-an'])assert.equal(checkShort(q,answer),true,answer);
+  for(const answer of ['netstat an','netstatan','netstat-an','netstat /an'])assert.equal(checkShort(q,answer),false,answer);
+  const view={answer:'UNIFIED_AUDIT_TRAIL',matchMode:'code'};
+  assert.equal(checkShort(view,'unified_audit_trail'),true);assert.equal(checkShort(view,'UNIFIEDAUDITTRAIL'),false);
+});
+
+test('조회 방향을 묻는 단답은 오른쪽·왼쪽 화살표를 구별한다',()=>{
+  const q={answer:'IP → 도메인 이름',matchMode:'code'};
+  assert.equal(checkShort(q,'IP -> 도메인 이름'),true);
+  assert.equal(checkShort(q,'IP ← 도메인 이름'),false);
+  assert.equal(checkShort(q,'IP <- 도메인 이름'),false);
+  assert.equal(checkShort(q,'도메인 이름 → IP'),false);
+  assert.equal(normalizeCode(' A → B '),'a→b');
+});
+
+test('용어형 숫자 단답도 양수와 음수를 같은 값으로 인정하지 않는다',()=>{
+  const q={answer:'48비트, 24비트',acceptedAnswers:['48비트 24비트']};
+  assert.equal(checkShort(q,'48비트 24비트'),true);
+  for(const answer of ['-48비트, 24비트','48비트, -24비트','−48비트,24비트'])assert.equal(checkShort(q,answer),false,answer);
+  assert.equal(normalize('buffer-overflow'),normalize('Buffer Overflow'));
+  assert.equal(normalize('SHA-256'),normalize('SHA256'));
+});
+
+test('문항 revision은 양의 정수만 인정하고 기존 문항은 1로 해석한다',()=>{
+  assert.equal(questionRevision({revision:2}),2);
+  for(const revision of [undefined,0,-1,1.5,'2',NaN])assert.equal(questionRevision({revision}),1);
+});
+
+test('개정 전 시도는 답안·점수·메모를 보존하되 현재 정답률에서 제외한다',()=>{
+  const changed=find('essay'),unchanged=find('mcq');
+  const current=questions.map(q=>q.id===changed.id?{...q,revision:2}:q);
+  const raw=emptyState();recordAttempt(raw,changed,'개정 전 작성한 답',1,true);recordAttempt(raw,unchanged,1,1);
+  raw.notes[changed.id]='틀렸던 이유 메모';raw.bookmarks=[changed.id];
+  const s=sanitizeState(JSON.parse(JSON.stringify(raw)),current,concepts),a=s.attempts[changed.id];
+  assert.equal(a.answer,'개정 전 작성한 답');assert.equal(a.score,1);assert.equal(a.correct,false);assert.equal(a.needsReview,true);assert.equal(a.revision,1);
+  assert.equal(s.notes[changed.id],'틀렸던 이유 메모');assert.deepEqual(s.bookmarks,[changed.id]);
+  assert.equal(s.attempts[unchanged.id].needsReview,false);assert.equal(s.attempts[unchanged.id].correct,true);
+  const p=conceptProgress(concepts[0],current,s);assert.equal(p.done,1);assert.equal(p.correct,1);
+  recordAttempt(s,current.find(q=>q.id===changed.id),'새 기준으로 다시 푼 답',1,true);
+  assert.equal(s.attempts[changed.id].revision,2);assert.equal(s.attempts[changed.id].needsReview,false);assert.equal(s.attempts[changed.id].count,2);
+});
+
+test('완료 시험의 개정 문항만 재검토 상태로 돌리고 과거 숫자 답을 새 정답으로 채점하지 않는다',()=>{
+  const changed=find('mcq'),essay=find('essay'),short=find('short');
+  const current=questions.map(q=>q.id===changed.id?{...q,revision:2,answer:0}:q);
+  const ex=savedExam({status:'done',grades:{[changed.id]:1,[essay.id]:0.5,[short.id]:1},rubrics:{[changed.id]:[0],[essay.id]:[0]}});
+  const s=sanitizeState({...emptyState(),exam:ex},current,concepts);
+  assert.equal(s.exam.status,'review');assert.deepEqual(s.exam.pendingRevisionIds,[changed.id]);
+  assert.equal(s.exam.answers[changed.id],1,'과거 답은 현재 보기 의미로 변환하지 않고 보존한다');
+  assert.equal(s.exam.grades[changed.id],undefined);assert.equal(s.exam.rubrics[changed.id],undefined);
+  assert.equal(s.exam.grades[essay.id],0.5);assert.deepEqual(s.exam.rubrics[essay.id],[0]);assert.equal(s.exam.grades[short.id],1);
+  assert.equal(s.exam.revisions[changed.id],1);
+});
+
+test('재확인 확인은 해당 문항의 revision만 갱신하고 새 답안 초안을 제거한다',()=>{
+  const changed={...find('mcq'),revision:2},other={...find('essay'),revision:3};
+  const ex=savedExam({pendingRevisionIds:[changed.id,other.id],revisionDrafts:{[changed.id]:0,[other.id]:'작성 중'}});
+  const preserved={...ex.answers};acknowledgeRevision(ex,changed);
+  assert.equal(ex.revisions[changed.id],2);assert.deepEqual(ex.pendingRevisionIds,[other.id]);
+  assert.equal(ex.revisionDrafts[changed.id],undefined);assert.equal(ex.revisionDrafts[other.id],'작성 중');assert.deepEqual(ex.answers,preserved);
+});
+
+test('개정 답안 초안은 해당 문항의 선택형/주관식 형식에 맞게 복원한다',()=>{
+  const choice=find('mcq'),essay=find('essay'),short=find('short');
+  const current=questions.map(q=>[choice.id,essay.id].includes(q.id)?{...q,revision:2}:q);
+  const ex=savedExam({status:'review',revisionDrafts:{[choice.id]:0,[essay.id]:'x'.repeat(13000),[short.id]:'개정 안 된 문항의 초안',missing:'없는 문항'}});
+  const s=sanitizeState({...emptyState(),exam:ex},current,concepts);
+  assert.equal(s.exam.revisionDrafts[choice.id],0);assert.equal(s.exam.revisionDrafts[essay.id].length,12000);
+  assert.equal(s.exam.revisionDrafts[short.id],undefined);assert.equal(s.exam.revisionDrafts.missing,undefined);
+  ex.revisionDrafts={[choice.id]:'1',[essay.id]:1};
+  const invalid=sanitizeState({...emptyState(),exam:ex},current,concepts);
+  assert.equal(invalid.exam.revisionDrafts[choice.id],undefined);assert.equal(invalid.exam.revisionDrafts[essay.id],undefined);
+});
+
+test('과거 시험 이력은 점수를 보존하면서 개정 전 문항 포함 여부를 표시한다',()=>{
+  const changed=find('essay'),unchanged=find('mcq');
+  const current=questions.map(q=>q.id===changed.id?{...q,revision:2}:q);
+  const raw={...emptyState(),examHistory:[{date:1,ids:[changed.id],score:100,mode:'written'},{date:2,ids:[unchanged.id],score:100,mode:'objective'}]};
+  const s=sanitizeState(raw,current,concepts);
+  assert.equal(s.examHistory[0].score,100);assert.equal(s.examHistory[0].needsReview,true);assert.equal(s.examHistory[1].needsReview,false);
 });

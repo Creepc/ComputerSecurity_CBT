@@ -131,6 +131,11 @@ for (let chapter = 1; chapter <= 4; chapter++) {
     if (!ownConceptIds.has(question.conceptId)) fail(`${label}: 같은 장의 conceptId를 참조하지 않습니다.`);
     else conceptQuestions.set(question.conceptId, conceptQuestions.get(question.conceptId) + 1);
     if (!['mcq', 'short', 'ox', 'essay'].includes(question.type)) fail(`${label}: 지원하지 않는 문항 유형 ${question.type}.`);
+    if (question.revision !== undefined && (!Number.isInteger(question.revision) || question.revision < 1)) fail(`${label}: revision은 1 이상의 정수여야 합니다.`);
+    if (question.matchMode !== undefined && question.matchMode !== 'code') fail(`${label}: 지원하는 명시적 matchMode는 code입니다.`);
+    if (question.caseSensitive !== undefined && typeof question.caseSensitive !== 'boolean') fail(`${label}: caseSensitive는 boolean이어야 합니다.`);
+    if (question.caseSensitive === true && question.matchMode !== 'code') fail(`${label}: caseSensitive를 적용하려면 matchMode:code가 필요합니다.`);
+    if (question.type === 'short' && !['single','multi-part'].includes(question.shortForm)) fail(`${label}: 단답형 shortForm은 single 또는 multi-part여야 합니다.`);
     if (!['기본', '응용', '심화'].includes(question.difficulty)) fail(`${label}: 난이도는 기본/응용/심화 중 하나여야 합니다.`);
     entry.byType[question.type] = (entry.byType[question.type] || 0) + 1;
     types.set(question.type, (types.get(question.type) || 0) + 1);
@@ -201,6 +206,23 @@ if (examPattern) {
   for (const section of ['strategies', 'scopeNotes', 'cautions']) stringArray(examPattern[section], `exam-pattern ${section}`, { required: true });
   for (const [section, expected] of Object.entries({ midterm: { learningQuestions: 13, essay: 9, short: 1, mcq: 3 }, final: { learningQuestions: 12, essay: 4, short: 8, mcq: 0 } })) {
     for (const [key, value] of Object.entries(expected)) if (examPattern[section]?.[key] !== value) fail(`exam-pattern ${section}.${key}: 원시험 분석값 ${value}와 다릅니다.`);
+  }
+}
+
+if (fs.existsSync(path.join(root, 'data/review-log.json'))) {
+  const log = readJson('data/review-log.json');
+  if (log) {
+    if (!Number.isInteger(log.baselineQuestions) || log.baselineQuestions < 0) fail('review-log: baselineQuestions는 0 이상의 정수여야 합니다.');
+    if (log.currentQuestions !== allQuestionIds.size) fail(`review-log: currentQuestions(${log.currentQuestions})와 실제 문제 수(${allQuestionIds.size})가 다릅니다.`);
+    if (log.addedQuestions !== allQuestionIds.size - log.baselineQuestions) fail('review-log: addedQuestions는 currentQuestions-baselineQuestions와 같아야 합니다.');
+    if (!Array.isArray(log.changes)) fail('review-log: changes 배열이 필요합니다.');
+    else log.changes.forEach((change,index) => {
+      if (!change || typeof change !== 'object') { fail(`review-log changes[${index}]: 변경 내역 객체가 필요합니다.`); return; }
+      if (change.questionIds !== undefined) {
+        if (!Array.isArray(change.questionIds)) fail(`review-log changes[${index}]: questionIds는 배열이어야 합니다.`);
+        else for (const id of change.questionIds) if (!allQuestionIds.has(id)) fail(`review-log changes[${index}]: 존재하지 않는 문항 ID ${id}.`);
+      }
+    });
   }
 }
 
