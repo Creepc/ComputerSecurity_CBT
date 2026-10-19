@@ -11,9 +11,10 @@ const baselineEssayIds=`q1-054 q1-055 q1-056 q1-057 q1-058 q1-059 q1-060 q1-061 
 q2-111 q2-112 q2-113 q2-114 q2-115 q2-116 q2-117 q2-118 q2-119 q2-120 q2-121 q2-122 q2-123 q2-124 q2-125 q2-126 q2-127 q2-128 q2-129 q2-130 q2-131 q2-132 q2-133 q2-134 q2-137 q2-139 q2-140 q2-141 q2-142 q2-143 q2-145 q2-146 q2-147
 q3-041 q3-042 q3-044 q3-046 q3-047 q3-049 q3-050 q3-052 q3-053 q3-055 q3-056 q3-057 q3-058 q3-059 q3-060 q3-061 q3-062 q3-064 q3-065 q3-067 q3-068 q3-069 q3-071 q3-073 q3-074 q3-076 q3-077 q3-078 q3-079 q3-080 q3-102 q3-105 q3-107 q3-108 q3-109 q3-112 q3-115 q3-117
 q4-036 q4-037 q4-039 q4-041 q4-042 q4-044 q4-045 q4-047 q4-048 q4-049 q4-050 q4-051 q4-052 q4-054 q4-055 q4-056 q4-057 q4-059 q4-060 q4-061 q4-062 q4-063 q4-065 q4-066 q4-067 q4-068 q4-069 q4-071 q4-072 q4-073 q4-074 q4-075 q4-097 q4-102`.split(/\s+/);
-// The original 127 essays' model answers and actual scoring criteria, before guides.
-// New questions are deliberately outside this digest and are validated dynamically.
-const baselineCriteriaDigest='1dcb44a06c28c96fba38db7327580cff1729ed3ec20377c5fc5374b3f8dca872';
+// Preserve the original criteria except q3-056, explicitly revised against the current PPT.
+// Its new requirements and revision migration are checked separately below.
+const unchangedEssayIds=baselineEssayIds.filter(id=>id!=='q3-056');
+const baselineCriteriaDigest='8d0dfee4558e740f09065680541d9a85893175f2c335c40b31cd5babb7eb956f';
 const essay={id:'hint-essay',chapter:1,conceptId:'hint-concept',type:'essay',revision:2,options:[],answer:'원인과 결과',rubric:['원인','결과']};
 const mcq={id:'hint-mcq',chapter:1,conceptId:'hint-concept',type:'mcq',options:[{text:'A'},{text:'B'}],answer:0};
 const fixtureQuestions=[essay,mcq],fixtureConcepts=[{id:'hint-concept',chapter:1}];
@@ -70,14 +71,46 @@ test('restored hint cannot smuggle a score and a revised question discards the o
  assert.deepEqual(study.sanitizeState(raw,[{...essay,revision:3}],fixtureConcepts).worksheet,{});
 });
 
-test('adding writing guides preserves every original essay model answer and scoring criterion',()=>{
+test('the other 126 original essay answers and criteria remain unchanged after lecture review',()=>{
  const byId=new Map(questions.map(q=>[q.id,q]));
- const original=baselineEssayIds.map(id=>{
+ assert.equal(unchangedEssayIds.length,126);
+ const original=unchangedEssayIds.map(id=>{
   const q=byId.get(id);assert.ok(q,`${id}: original essay missing`);assert.equal(q.type,'essay');
   return{id:q.id,answer:q.answer,rubric:q.rubric};
  });
  const digest=createHash('sha256').update(JSON.stringify(original)).digest('hex');
  assert.equal(digest,baselineCriteriaDigest,'Guides must explain existing criteria rather than silently change them.');
+});
+
+test('current SYN defense revisions align criteria and preserve old study records for reassessment',()=>{
+ const byId=new Map(questions.map(q=>[q.id,q])),ids=['q3-056','q3-087'],raw=study.emptyState();
+ const essay=byId.get(ids[0]),choice=byId.get(ids[1]);
+ assert.equal(essay.revision,2);assert.equal(choice.revision,2);
+ assert.match(essay.prompt,/SYN cookies와 SYN proxy가 각각 어떤 방식/);
+ assert.deepEqual(essay.rubric,['마지막 ACK가 오지 않는 연결 요청의 누적','SYN-RECEIVED 미완료 연결 자원 고갈','SYN cookies의 완료 전 상태 저장 부담 완화','SYN proxy의 앞단 연결 확인과 서버 보호','회선 포화에 상위망의 트래픽 분산·정제 연결']);
+ assert.ok(!essay.acceptedAnswers.some(answer=>/대기 시간|침입 방지/.test(answer)));
+ assert.equal(choice.answer,0);assert.deepEqual(choice.options.map(o=>o.text),['O','X']);
+ raw.exam={ids,answers:{[ids[0]]:'이전 서술 답안',[ids[1]]:0},grades:{[ids[0]]:0.5,[ids[1]]:1},rubrics:{[ids[0]]:[0,1]},revisions:Object.fromEntries(ids.map(id=>[id,1])),deadline:Date.now()+60000,status:'done',index:0,mode:'mixed',started:Date.now()};
+ for(const id of ids){
+  const q=byId.get(id),answer=raw.exam.answers[id];
+  raw.attempts[id]={count:2,score:raw.exam.grades[id],correct:id===ids[1],answer,date:100,wrongCount:1,selfGraded:id===ids[0],revision:1};
+  raw.worksheet[id]={...study.emptyWorksheetDraft(q),revision:1,text:typeof answer==='string'?answer:'',choice:id===ids[1]?0:null};
+  raw.notes[id]='보존할 메모';raw.bookmarks.push(id);
+ }
+ raw.examHistory=[{ids,score:72,revisions:{...raw.exam.revisions}}];
+ const restored=study.sanitizeState(JSON.parse(JSON.stringify(raw)),questions,concepts);
+ assert.equal(restored.exam.status,'review');assert.deepEqual(restored.exam.pendingRevisionIds,ids);
+ for(const id of ids){
+  assert.equal(restored.attempts[id].answer,raw.attempts[id].answer);
+  assert.equal(restored.attempts[id].score,raw.attempts[id].score);
+  assert.equal(restored.attempts[id].needsReview,true);assert.equal(restored.notes[id],'보존할 메모');
+  assert.ok(restored.bookmarks.includes(id));assert.equal(restored.worksheet[id],undefined);
+  assert.equal(restored.exam.answers[id],raw.exam.answers[id]);assert.equal(restored.exam.grades[id],undefined);
+ }
+ assert.equal(restored.examHistory[0].score,72);assert.equal(restored.examHistory[0].needsReview,true);
+ study.recordAttempt(restored,essay,'새 답안',1,true);
+ assert.equal(restored.attempts[essay.id].needsReview,false);assert.equal(restored.attempts[essay.id].revision,2);
+ assert.equal(restored.attempts[choice.id].needsReview,true);
 });
 
 test('the four clarified real essays preserve old answers and scores while requesting a fresh assessment',()=>{

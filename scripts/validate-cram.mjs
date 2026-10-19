@@ -23,11 +23,11 @@ for(const [index,t] of (data.topics||[]).entries()){
  for(const field of ['title','priorityReason','memoryLine'])check(text(t[field]),t.id+': '+field+' 필요');
  check(t.memoryTips&&typeof t.memoryTips==='object'&&!Array.isArray(t.memoryTips),t.id+': 주제별 암기 팁 필요');
  for(const field of ['cue','howToRemember','distinguish','recallPrompt'])check(text(t.memoryTips?.[field]),t.id+': 암기 팁 '+field+' 필요');
- check(Array.isArray(t.sourceSlides)&&t.sourceSlides.length>0&&t.sourceSlides.every(n=>Number.isInteger(n)&&n>=1&&n<=[0,40,74,74,56][t.chapter]),t.id+': 범위 내 슬라이드 근거 필요');
+ check(Array.isArray(t.sourceSlides)&&t.sourceSlides.length>0&&t.sourceSlides.every(n=>Number.isInteger(n)&&n>=1&&n<=[0,40,74,78,56][t.chapter]),t.id+': 범위 내 슬라이드 근거 필요');
  check(Array.isArray(t.conceptIds)&&t.conceptIds.length>0&&t.conceptIds.every(id=>ch?.concepts.some(c=>c.id===id)),t.id+': 해당 장 개념 참조 필요');
  check(Array.isArray(t.evidence)&&t.evidence.length>0,t.id+': 기출 발문 근거 필요');
  for(const ev of t.evidence||[])check(['midterm','final'].includes(ev.exam)&&Array.isArray(ev.numbers)&&ev.numbers.length>0&&ev.numbers.every(n=>Number.isInteger(n)&&n>=1&&n<=(ev.exam==='midterm'?13:12))&&text(ev.observation),t.id+': 기출 종류·문항·관찰 필요');
- check(Array.isArray(t.essentials)&&t.essentials.length>=3&&t.essentials.length<=7,t.id+': 핵심 용어3~7개 필요');
+ check(Array.isArray(t.essentials)&&t.essentials.length>=3&&t.essentials.length<=9,t.id+': 핵심 용어3~9개 필요');
  const terms=new Set();for(const k of t.essentials||[]){check(text(k.term)&&text(k.explanation),t.id+': 용어 뜻 필요');check(!terms.has(k.term),t.id+': 용어 중복');terms.add(k.term);}
  check(Array.isArray(t.questions)&&t.questions.length===2,t.id+': 예상문항2개 필요');
  for(const [i,q] of (t.questions||[]).entries()){

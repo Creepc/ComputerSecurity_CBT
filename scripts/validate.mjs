@@ -16,7 +16,7 @@ let writingGuideCount = 0;
 // Sparse text alone is not evidence that a slide lacks testable content.
 const structuralSlides = new Map([
   [1, new Set([1,2,3,40])], [2, new Set([1,2,74])],
-  [3, new Set([1,2,3,74])], [4, new Set([1,2,3,52])]
+  [3, new Set([1,2,3,78])], [4, new Set([1,2,3,56])]
 ]);
 
 function fail(message) { errors.push(message); }
@@ -76,8 +76,8 @@ const manifest = fs.existsSync(path.join(root, 'analysis/slide-manifest.json'))
   : [
     { chapter: 1, slides: 40, sparseSlides: [1,2,3,4,6,7,11,20,21,22,23,24,26,27,28,29,30,32,34,35,38,39,40] },
     { chapter: 2, slides: 74, sparseSlides: [1,2,11,29,36,42,43,51,74] },
-    { chapter: 3, slides: 74, sparseSlides: [1,2,4,14,49,66,74] },
-    { chapter: 4, slides: 56, sparseSlides: [1,2,14,15,19,20,24,25,52] }
+    { chapter: 3, slides: 78, sparseSlides: [1,2,4,14,69,78] },
+    { chapter: 4, slides: 56, sparseSlides: [1,2,15,16,20,21,25,26,56] }
   ];
 const expectedSlides = new Map((Array.isArray(manifest) ? manifest : []).map(row => [row.chapter, row.slides]));
 const sparseSlides = new Map((Array.isArray(manifest) ? manifest : []).map(row => [row.chapter, new Set(row.sparseSlides || [])]));
@@ -86,7 +86,7 @@ if (expectedSlides.size !== 4) fail('슬라이드 manifest에 4개 장이 필요
 for (let chapter = 1; chapter <= 4; chapter++) {
   const data = readJson(`data/chapter${chapter}.json`);
   if (!data) continue;
-  const totalSlides = expectedSlides.get(chapter) || [0, 40, 74, 74, 56][chapter];
+  const totalSlides = expectedSlides.get(chapter) || [0, 40, 74, 78, 56][chapter];
   const entry = {
     chapter, title: data.title, slideCount: totalSlides, concepts: 0, questions: 0,
     byType: {}, conceptWithoutQuestions: [], questionSourceSlides: [], conceptSourceSlides: [],

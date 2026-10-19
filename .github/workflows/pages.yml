@@ -23,6 +23,8 @@ jobs:
           node-version: '22'
       - name: Validate content and study logic
         run: npm test
+      - name: Verify slide order and speaker notes extraction
+        run: python -m unittest discover -s tests -p test_extract_slides.py
       - name: Build static site
         run: npm run build
       - uses: actions/configure-pages@v5

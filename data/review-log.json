@@ -1,8 +1,8 @@
 {
-  "version": "20261019-r8",
+  "version": "20261019-r9",
   "date": "2026-10-19",
   "reviewedFiles": 4,
-  "reviewedSlides": 244,
+  "reviewedSlides": 248,
   "baselineQuestions": 446,
   "currentQuestions": 462,
   "addedQuestions": 16,
@@ -12,6 +12,14 @@
   "essayWritingGuides": 133,
   "inlineConcepts": 149,
   "changes": [
+    {
+      "title": "벼락치기 12주제를 강의 원문과 재대조",
+      "description": "정의·비교·공격 과정·방어를 직접 서술할 수 있도록 핵심 설명과 모범답안·체크 요소를 보완했습니다. 원본 PPT의 실제 순서와 노트 연결을 다시 확인해 총 248쪽으로 집계하고, TCP 종료·주소와 공격 위치·DDoS 방어 위치 등의 보충 내용을 반영했습니다. 현재 보충 슬라이드의 SYN cookies·SYN proxy 방어에 맞춰 기존 2문항을 개정했으며 이전 답안·점수는 보관하고 재확인이 필요함을 표시합니다.",
+      "questionIds": [
+        "q3-056",
+        "q3-087"
+      ]
+    },
     {
       "title": "벼락치기12주제에 암기 팁 추가",
       "description": "암기 구호를 실제 개념에 연결하는 연상법, 헷갈리는 개념의 구별 기준, 답안을 가리고 떠올릴 질문을 각 주제에 넣었습니다. 핵심 암기표에도 구호를 표시하며 가리고 직접 쓰기에서는 팁도 함께 숨깁니다. 기존 예상문제의 발문·정답·채점 요소는 유지합니다.",
@@ -250,6 +258,19 @@
     "styleTransferTopics": 1,
     "separateQuestions": 24,
     "route": "#/cram",
-    "memoryTips": 12
+    "memoryTips": 12,
+    "lectureVerifiedTopics": 12,
+    "lectureSourcePages": 248,
+    "pageOrder": "presentation.xml relationship order",
+    "lectureReview": {
+      "date": "2026-10-19",
+      "topics": 12,
+      "questions": 24,
+      "reviewedSourcePages": 248,
+      "revisedMainQuestionIds": [
+        "q3-056",
+        "q3-087"
+      ]
+    }
   }
 }
