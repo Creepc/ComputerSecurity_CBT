@@ -22,7 +22,7 @@ const escapeHtml=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 async function boot(saved={}){
  const store={...saved},session={},events={},updated=new Map(),app={innerHTML:''};
  const toast={textContent:'',classList:{add(){},remove(){}}};
- const datasets=Object.fromEntries(chapters.map(ch=>[`chapter${ch.chapter}.json`,ch]));
+ const datasets=Object.fromEntries(chapters.map(ch=>[`chapter${ch.chapter}.json`,ch]));datasets['cram.json']=JSON.parse(fs.readFileSync(new URL('../data/cram.json',import.meta.url),'utf8'));
  const context=vm.createContext({__study:study,URLSearchParams,console,Date,Math,Number,Set,Map,JSON,String,Array,Object,Blob,URL,setTimeout:()=>0,clearTimeout(){},setInterval(){},location:{hash:'#/bank'},window:{scrollY:0,scrollTo(){},addEventListener(){},confirm(){return true}},document:{activeElement:null,documentElement:{dataset:{}},querySelector(s){if(s==='#app')return app;if(s==='#toast')return toast;return null},querySelectorAll(){return []},getElementById(id){if(!app.innerHTML.includes(`id="${id}"`))return null;return{scrollIntoView(){},set outerHTML(html){updated.set(id,html)}}},addEventListener(type,fn){events[type]=fn}},localStorage:{getItem(k){return store[k]||null},setItem(k,v){store[k]=v}},sessionStorage:{getItem(k){return session[k]||null},setItem(k,v){session[k]=v}},fetch:async url=>{const key=String(url).split('/').at(-1).split('?')[0];return{ok:true,json:async()=>structuredClone(datasets[key]||{changes:[]})}}});
  const source=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
  vm.runInContext(source.replace(/^import \{([^}]+)\} from [^;]+;/,'const {$1}=__study;').replace(/init\(\);\s*$/,'globalThis.bootPromise=init();'),context);

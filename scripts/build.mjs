@@ -5,7 +5,7 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const dist=resolve(root,'dist');
 await mkdir(resolve(dist,'data'),{recursive:true});
 for(const name of ['index.html','app.js','study.js','style.css','icon.svg'])await copyFile(resolve(root,name),resolve(dist,name));
-for(const name of ['chapter1.json','chapter2.json','chapter3.json','chapter4.json','exam-pattern.json','review-log.json']){
+for(const name of ['chapter1.json','chapter2.json','chapter3.json','chapter4.json','exam-pattern.json','review-log.json','cram.json']){
  const body=JSON.parse(await readFile(resolve(root,'data',name),'utf8'));
  await writeFile(resolve(dist,'data',name),JSON.stringify(body),'utf8');
 }

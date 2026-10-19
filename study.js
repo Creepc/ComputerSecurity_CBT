@@ -1,7 +1,20 @@
 export const STORAGE_KEY = 'security-midterm-v1';
 export const TYPES = {mcq:'객관식',short:'단답형',essay:'서술형',ox:'O / X'};
 export const CHAPTER_TITLES = ['','정보 보안의 세계','시스템 보안','네트워크 보안','웹 보안'];
-export function emptyState(){return {version:1,attempts:{},bookmarks:[],learned:[],notes:{},worksheet:{},exam:null,examHistory:[],theme:'light'};}
+export function emptyCramState(){return {answers:{},hidden:[],remembered:[],recall:false,onlyPending:false};}
+export function sanitizeCramState(raw,topics=[]){
+ const next=emptyCramState();if(!raw||typeof raw!=='object'||Array.isArray(raw))return next;
+ const topicIds=new Set(topics.map(t=>t.id)),qMap=new Map(topics.flatMap(t=>t.questions).map(q=>[q.id,q]));
+ if(raw.answers&&typeof raw.answers==='object'&&!Array.isArray(raw.answers))for(const [id,value] of Object.entries(raw.answers)){
+  const q=qMap.get(id);if(!q)continue;
+  if(q.type==='mcq'&&Number.isInteger(value)&&value>=0&&value<q.options.length)next.answers[id]=value;
+  else if(q.type!=='mcq'&&typeof value==='string')next.answers[id]=value.slice(0,12000);
+ }
+ next.hidden=Array.isArray(raw.hidden)?[...new Set(raw.hidden.filter(id=>qMap.has(id)))]:[];
+ next.remembered=Array.isArray(raw.remembered)?[...new Set(raw.remembered.filter(id=>topicIds.has(id)))]:[];
+ next.recall=raw.recall===true;next.onlyPending=raw.onlyPending===true;return next;
+}
+export function emptyState(){return {version:1,attempts:{},bookmarks:[],learned:[],notes:{},worksheet:{},cram:emptyCramState(),exam:null,examHistory:[],theme:'light'};}
 export function normalize(text){return String(text).normalize('NFKC').toLowerCase().replace(/(^|[\s,;:(])[-−–](?=\d)/gu,'$1음수').replace(/[\s\p{P}\p{S}]/gu,'');}
 export function normalizeCode(text,caseSensitive=false){
   const value=String(text).normalize('NFKC').replace(/[–—−]/g,'-').replace(/->/g,'→').replace(/<-/g,'←').trim().replace(/\s+/g,' ').replace(/\s*([→←])\s*/g,'$1');
@@ -40,7 +53,7 @@ export function acknowledgeRevision(exam,q){
   if(exam.revisionDrafts)delete exam.revisionDrafts[q.id];
 }
 export function shuffle(items, random=Math.random){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-export function sanitizeState(raw, questions, concepts){
+export function sanitizeState(raw, questions, concepts, cramTopics=[]){
   if(!raw || raw.version!==1 || typeof raw!=='object') throw new Error('이 학습실의 기록 파일이 아닙니다.');
   const s=emptyState(), qs=new Set(questions.map(q=>q.id)), cs=new Set(concepts.map(c=>c.id)), questionMap=new Map(questions.map(q=>[q.id,q]));
   s.theme=raw.theme==='dark'?'dark':'light';
@@ -77,6 +90,7 @@ export function sanitizeState(raw, questions, concepts){
     if(s.exam.pendingRevisionIds.length&&s.exam.status==='done')s.exam.status='review';
   }
   if(raw.worksheet&&typeof raw.worksheet==='object'&&!Array.isArray(raw.worksheet))for(const [id,draft] of Object.entries(raw.worksheet))if(qs.has(id)){const value=sanitizeWorksheetDraft(questionMap.get(id),draft);if(value)s.worksheet[id]=value;}
+  s.cram=sanitizeCramState(raw.cram,cramTopics);
   return s;
 }
 export function recordAttempt(state,q,answer,score,selfGraded=false){
