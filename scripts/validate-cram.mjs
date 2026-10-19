@@ -21,6 +21,8 @@ for(const [index,t] of (data.topics||[]).entries()){
  const ch=chapters.find(c=>c.chapter===t.chapter);
  check(!!ch,t.id+': 잘못된 장');
  for(const field of ['title','priorityReason','memoryLine'])check(text(t[field]),t.id+': '+field+' 필요');
+ check(t.memoryTips&&typeof t.memoryTips==='object'&&!Array.isArray(t.memoryTips),t.id+': 주제별 암기 팁 필요');
+ for(const field of ['cue','howToRemember','distinguish','recallPrompt'])check(text(t.memoryTips?.[field]),t.id+': 암기 팁 '+field+' 필요');
  check(Array.isArray(t.sourceSlides)&&t.sourceSlides.length>0&&t.sourceSlides.every(n=>Number.isInteger(n)&&n>=1&&n<=[0,40,74,74,56][t.chapter]),t.id+': 범위 내 슬라이드 근거 필요');
  check(Array.isArray(t.conceptIds)&&t.conceptIds.length>0&&t.conceptIds.every(id=>ch?.concepts.some(c=>c.id===id)),t.id+': 해당 장 개념 참조 필요');
  check(Array.isArray(t.evidence)&&t.evidence.length>0,t.id+': 기출 발문 근거 필요');

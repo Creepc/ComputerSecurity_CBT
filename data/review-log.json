@@ -1,5 +1,5 @@
 {
-  "version": "20261019-r7",
+  "version": "20261019-r8",
   "date": "2026-10-19",
   "reviewedFiles": 4,
   "reviewedSlides": 244,
@@ -12,6 +12,11 @@
   "essayWritingGuides": 133,
   "inlineConcepts": 149,
   "changes": [
+    {
+      "title": "벼락치기12주제에 암기 팁 추가",
+      "description": "암기 구호를 실제 개념에 연결하는 연상법, 헷갈리는 개념의 구별 기준, 답안을 가리고 떠올릴 질문을 각 주제에 넣었습니다. 핵심 암기표에도 구호를 표시하며 가리고 직접 쓰기에서는 팁도 함께 숨깁니다. 기존 예상문제의 발문·정답·채점 요소는 유지합니다.",
+      "questionIds": []
+    },
     {
       "title": "교수 출제 성향으로 압축한 벼락치기 전용 메뉴",
       "description": "두 원본 시험의 발문·공식답안을 현재 범위와 맞춰 교집합 11주제를 추리고, 과정·비교 중심의 현재 자료 응용으로 XSS·CSRF 1주제를 구분해 추가했습니다. 암기 문장·핵심 설명·모범답안·보기별 해설을 담은 별도 예상 24문항이며 기존 462문항 문제은행 수와 점수에는 포함하지 않습니다.",
@@ -244,6 +249,7 @@
     "overlapTopics": 11,
     "styleTransferTopics": 1,
     "separateQuestions": 24,
-    "route": "#/cram"
+    "route": "#/cram",
+    "memoryTips": 12
   }
 }
