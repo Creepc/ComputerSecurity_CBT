@@ -1,9 +1,12 @@
 export const STORAGE_KEY = 'security-midterm-v1';
 export const TYPES = {mcq:'객관식',short:'단답형',essay:'서술형',ox:'O / X'};
 export const CHAPTER_TITLES = ['','정보 보안의 세계','시스템 보안','네트워크 보안','웹 보안'];
-export function emptyCramState(){return {answers:{},hidden:[],remembered:[],recall:false,onlyPending:false};}
+export function emptyCramState(){return {answers:{},hidden:[],remembered:[],recall:false,onlyPending:false,catalogVersion:1};}
 export function sanitizeCramState(raw,topics=[]){
- const next=emptyCramState();if(!raw||typeof raw!=='object'||Array.isArray(raw))return next;
+ const next=emptyCramState(),introduced=t=>Number.isInteger(t.introducedVersion)&&t.introducedVersion>0?t.introducedVersion:1;
+ next.catalogVersion=Math.max(1,...topics.map(introduced));
+ if(!raw||typeof raw!=='object'||Array.isArray(raw))return next;
+ const previousVersion=Number.isInteger(raw.catalogVersion)&&raw.catalogVersion>0?Math.min(raw.catalogVersion,next.catalogVersion):1;
  const topicIds=new Set(topics.map(t=>t.id)),qMap=new Map(topics.flatMap(t=>t.questions).map(q=>[q.id,q]));
  if(raw.answers&&typeof raw.answers==='object'&&!Array.isArray(raw.answers))for(const [id,value] of Object.entries(raw.answers)){
   const q=qMap.get(id);if(!q)continue;
@@ -12,7 +15,9 @@ export function sanitizeCramState(raw,topics=[]){
  }
  next.hidden=Array.isArray(raw.hidden)?[...new Set(raw.hidden.filter(id=>qMap.has(id)))]:[];
  next.remembered=Array.isArray(raw.remembered)?[...new Set(raw.remembered.filter(id=>topicIds.has(id)))]:[];
- next.recall=raw.recall===true;next.onlyPending=raw.onlyPending===true;return next;
+ next.recall=raw.recall===true;next.onlyPending=raw.onlyPending===true;
+ if(next.recall&&previousVersion<next.catalogVersion)next.hidden=[...new Set([...next.hidden,...topics.filter(t=>introduced(t)>previousVersion).flatMap(t=>t.questions.map(q=>q.id))])];
+ return next;
 }
 export function emptyState(){return {version:1,attempts:{},bookmarks:[],learned:[],notes:{},worksheet:{},cram:emptyCramState(),exam:null,examHistory:[],theme:'light'};}
 export function normalize(text){return String(text).normalize('NFKC').toLowerCase().replace(/(^|[\s,;:(])[-−–](?=\d)/gu,'$1음수').replace(/[\s\p{P}\p{S}]/gu,'');}

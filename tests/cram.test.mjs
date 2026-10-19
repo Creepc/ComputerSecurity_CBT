@@ -28,7 +28,7 @@ const json=(env,expression)=>JSON.parse(env.run(`JSON.stringify(${expression})`)
 const mainRecords=env=>env.run('JSON.stringify({attempts:state.attempts,worksheet:state.worksheet,notes:state.notes,bookmarks:state.bookmarks,learned:state.learned,exam:state.exam,examHistory:state.examHistory})');
 
 test('old backups and missing or malformed cram values receive independent default states',()=>{
- const expected={answers:{},hidden:[],remembered:[],recall:false,onlyPending:false};
+ const expected={answers:{},hidden:[],remembered:[],recall:false,onlyPending:false,catalogVersion:1};
  assert.deepEqual(study.emptyCramState(),expected);
  for(const raw of [undefined,null,[],true,1,'bad'])assert.deepEqual(study.sanitizeCramState(raw,fixtureTopics),expected);
  const legacy=study.emptyState();delete legacy.cram;
@@ -57,13 +57,30 @@ test('cram mode booleans restore strictly and normalized containers cannot alias
  assert.equal(raw.answers['focus-essay'],'초안');assert.deepEqual(raw.hidden,['focus-essay']);assert.deepEqual(raw.remembered,['focus-a']);
 });
 
+test('new topics stay hidden in an older recall backup while previous individual reveals and drafts survive',()=>{
+ const added={id:'focus-added',introducedVersion:2,questions:[{id:'added-essay',type:'essay',options:[]},{id:'added-choice',type:'mcq',options:[{},{},{},{}]}]};
+ const expanded=[...fixtureTopics,added];
+ const legacy={answers:{'focus-essay':'계속 작성할 답안','focus-choice':0},hidden:['focus-choice'],remembered:['focus-a'],recall:true,onlyPending:true};
+ const restored=study.sanitizeCramState(legacy,expanded);
+ assert.deepEqual(restored.answers,legacy.answers);assert.deepEqual(restored.remembered,legacy.remembered);
+ assert.deepEqual(restored.hidden,['focus-choice','added-essay','added-choice']);
+ assert.equal(restored.hidden.includes('focus-essay'),false,'previously revealed old answers stay revealed');
+ assert.equal(restored.catalogVersion,2);assert.equal(legacy.catalogVersion,undefined);
+ restored.hidden=restored.hidden.filter(id=>id!=='added-essay');
+ restored.answers['added-essay']='새 주제의 초안';
+ assert.deepEqual(study.sanitizeCramState(JSON.parse(JSON.stringify(restored)),expanded),restored,'a new answer revealed after migration stays revealed on reload');
+ const learning=study.sanitizeCramState({...legacy,recall:false},expanded);
+ assert.deepEqual(learning.hidden,legacy.hidden);assert.equal(learning.catalogVersion,2);
+ assert.equal(study.sanitizeCramState(null,expanded).catalogVersion,2);
+});
+
 test('adding cram backup data preserves main-bank attempts, draft answers, notes and exam results',()=>{
  const raw=study.emptyState(),q=bank.find(q=>q.type==='essay');
  study.recordAttempt(raw,q,'기존 서술 답안',0.5,true);
  raw.worksheet[q.id]={...study.emptyWorksheetDraft(q),text:'기존 미완성 답안',hintVisible:true};
  raw.notes[q.id]='기존 메모';raw.bookmarks.push(q.id);raw.learned.push(q.conceptId);
  raw.examHistory=[{ids:[q.id],score:67,revisions:{[q.id]:study.questionRevision(q)}}];
- raw.cram={answers:{'focus-choice':0,'focus-short':'용어'},hidden:['focus-short'],remembered:['focus-b'],recall:true,onlyPending:false};
+ raw.cram={answers:{'focus-choice':0,'focus-short':'용어'},hidden:['focus-short'],remembered:['focus-b'],recall:true,onlyPending:false,catalogVersion:1};
  const restored=study.sanitizeState(JSON.parse(JSON.stringify(raw)),bank,concepts,fixtureTopics);
  assert.deepEqual(restored.attempts,raw.attempts);assert.deepEqual(restored.worksheet,raw.worksheet);
  assert.deepEqual(restored.notes,raw.notes);assert.deepEqual(restored.bookmarks,raw.bookmarks);assert.deepEqual(restored.learned,raw.learned);
@@ -97,6 +114,36 @@ test('the cram route renders every selected topic and question separately from t
  assert.equal(env.run('cramQuestions().some(q=>byId.has(q.id))'),false);
  assert.deepEqual(json(env,'state.attempts'),{});
  assert.ok(env.read('#/bank').includes('href="#/cram"'));
+});
+
+test('the four bounded lecture additions are identified by lecture evidence without invented past questions',async()=>{
+ const added=cram.topics.filter(t=>t.evidenceType==='lecture-core');
+ assert.equal(added.length,4);assert.equal(cram.topics.length,16);assert.equal(cramQuestions.length,32);
+ const env=await boot(),html=env.read('#/cram');
+ for(const topic of added){
+  assert.deepEqual(topic.evidence,[]);assert.ok(topic.lectureEvidence.length>0);
+  assert.equal(topic.questions[0].label,'강의 핵심 예상');assert.equal(topic.introducedVersion,2);
+  assert.equal(env.run(`cramEvidenceLabel(cramData.topics.find(t=>t.id===${JSON.stringify(topic.id)}))`),'현재 강의 핵심');
+  const evidence=env.run(`cramEvidenceDetails(cramData.topics.find(t=>t.id===${JSON.stringify(topic.id)}))`);
+  assert.match(evidence,/강의 [1-4]장/);assert.doesNotMatch(evidence,/(?:중간|기말) [0-9]/);
+  assert.ok(html.includes(`id="${topic.id}"`));
+ }
+ assert.equal(env.run('questions.length'),462,'the separate cram additions do not inflate the scored main bank');
+});
+
+test('fresh and reset users start with the current catalog so new individual reveals survive reload',async()=>{
+ const added=cram.topics.find(t=>t.introducedVersion===2).questions[0];
+ const env=await boot();env.read('#/cram');
+ for(const reset of [false,true]){
+  if(reset)env.click('reset-state');
+  assert.equal(env.run('state.cram.catalogVersion'),2);
+  env.click('cram-recall');env.click('cram-reveal',added.id);
+  env.input(added.id,'새 주제 작성 답안');
+  assert.equal(env.run(`state.cram.hidden.includes(${JSON.stringify(added.id)})`),false);
+  const restored=await boot(env.store);
+  assert.equal(restored.run(`state.cram.hidden.includes(${JSON.stringify(added.id)})`),false);
+  assert.equal(restored.run(`state.cram.answers[${JSON.stringify(added.id)}]`),'새 주제 작성 답안');
+ }
 });
 
 test('typing Korean and symbols saves exact text without rerendering or disturbing another answer',async()=>{

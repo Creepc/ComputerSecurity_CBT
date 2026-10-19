@@ -1,5 +1,5 @@
 {
-  "version": "20261019-r9",
+  "version": "20261019-r10",
   "date": "2026-10-19",
   "reviewedFiles": 4,
   "reviewedSlides": 248,
@@ -12,6 +12,11 @@
   "essayWritingGuides": 133,
   "inlineConcepts": 149,
   "changes": [
+    {
+      "title": "기출 일치만으로 빠졌던 강의 핵심 네 주제 추가",
+      "description": "AAA·식별·인증·인가, 웹 세션·쿠키, 무선 LAN 보안, 웹 인가·변조 입력·파일 접근을 추가해 총 16주제·32예상문항으로 압축했습니다. OS 권한과 스니핑은 기존 주제에 보강했습니다. 직접 기출과 강의 핵심의 선정 근거를 구분하고 기존 답안·암기 체크를 유지합니다.",
+      "questionIds": []
+    },
     {
       "title": "벼락치기 12주제를 강의 원문과 재대조",
       "description": "정의·비교·공격 과정·방어를 직접 서술할 수 있도록 핵심 설명과 모범답안·체크 요소를 보완했습니다. 원본 PPT의 실제 순서와 노트 연결을 다시 확인해 총 248쪽으로 집계하고, TCP 종료·주소와 공격 위치·DDoS 방어 위치 등의 보충 내용을 반영했습니다. 현재 보충 슬라이드의 SYN cookies·SYN proxy 방어에 맞춰 기존 2문항을 개정했으며 이전 답안·점수는 보관하고 재확인이 필요함을 표시합니다.",
@@ -253,13 +258,13 @@
     }
   ],
   "cramStudy": {
-    "topics": 12,
+    "topics": 16,
     "overlapTopics": 11,
     "styleTransferTopics": 1,
-    "separateQuestions": 24,
+    "separateQuestions": 32,
     "route": "#/cram",
-    "memoryTips": 12,
-    "lectureVerifiedTopics": 12,
+    "memoryTips": 16,
+    "lectureVerifiedTopics": 16,
     "lectureSourcePages": 248,
     "pageOrder": "presentation.xml relationship order",
     "lectureReview": {
@@ -271,6 +276,14 @@
         "q3-056",
         "q3-087"
       ]
+    },
+    "lectureCoreTopics": 4,
+    "scopeExpansion": {
+      "topicsAdded": 4,
+      "questionsAdded": 8,
+      "maximumTopics": 16,
+      "catalogVersion": 2,
+      "existingQuestionsPreserved": 24
     }
   }
 }
