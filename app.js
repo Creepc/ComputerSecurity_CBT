@@ -1,4 +1,4 @@
-import {STORAGE_KEY,TYPES,CHAPTER_TITLES,emptyState,sanitizeState,checkShort,shuffle,recordAttempt,selectExam,examScore,questionPoints,conceptProgress,questionRevision,acknowledgeRevision,emptyWorksheetDraft,worksheetHasAnswer,evaluateWorksheet} from './study.js?v=20261019-r10';
+import {STORAGE_KEY,TYPES,CHAPTER_TITLES,emptyState,sanitizeState,checkShort,shuffle,recordAttempt,selectExam,examScore,questionPoints,conceptProgress,questionRevision,acknowledgeRevision,emptyWorksheetDraft,worksheetHasAnswer,evaluateWorksheet} from './study.js?v=20261019-r11';
 
 const $=s=>document.querySelector(s);
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -227,10 +227,10 @@ document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&mobile){mobile=fa
 setInterval(tick,1000);
 
 async function init(){try{
- const loaded=await Promise.all([1,2,3,4].map(async n=>{const r=await fetch(`./data/chapter${n}.json?v=20261019-r10`);if(!r.ok)throw new Error(`자료 ${n}장을 불러오지 못했습니다.`);return r.json();}));
+ const loaded=await Promise.all([1,2,3,4].map(async n=>{const r=await fetch(`./data/chapter${n}.json?v=20261019-r11`);if(!r.ok)throw new Error(`자료 ${n}장을 불러오지 못했습니다.`);return r.json();}));
  const counts=[0,40,74,78,56];data=loaded.map(ch=>({...ch,slideCount:counts[ch.chapter],sourceFile:({1:'01장_정보 보안의 세계v2.pptx',2:'02장_시스템 보안v2.pptx',3:'03장_네트워크 보안v2.pptx',4:'04장_웹 보안v2.pptx'})[ch.chapter]}));
- try{const reviewResponse=await fetch('./data/review-log.json?v=20261019-r10');if(reviewResponse.ok)reviewData=await reviewResponse.json();}catch{}
- const cramResponse=await fetch('./data/cram.json?v=20261019-r10');if(!cramResponse.ok)throw new Error('벼락치기 자료를 불러오지 못했습니다.');cramData=await cramResponse.json();if(!Array.isArray(cramData.topics)||!cramData.topics.length)throw new Error('벼락치기 자료의 형식을 확인해 주세요.');
+ try{const reviewResponse=await fetch('./data/review-log.json?v=20261019-r11');if(reviewResponse.ok)reviewData=await reviewResponse.json();}catch{}
+ const cramResponse=await fetch('./data/cram.json?v=20261019-r11');if(!cramResponse.ok)throw new Error('벼락치기 자료를 불러오지 못했습니다.');cramData=await cramResponse.json();if(!Array.isArray(cramData.topics)||!cramData.topics.length)throw new Error('벼락치기 자료의 형식을 확인해 주세요.');
  concepts=data.flatMap(ch=>ch.concepts);questions=data.flatMap(ch=>ch.questions).map(q=>{
    if(q.type!=='mcq')return q;
    let seed=[...q.id].reduce((v,c)=>Math.imul(v^c.charCodeAt(0),16777619)>>>0,2166136261);const rng=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};

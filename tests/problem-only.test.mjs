@@ -11,10 +11,10 @@ const baselineEssayIds=`q1-054 q1-055 q1-056 q1-057 q1-058 q1-059 q1-060 q1-061 
 q2-111 q2-112 q2-113 q2-114 q2-115 q2-116 q2-117 q2-118 q2-119 q2-120 q2-121 q2-122 q2-123 q2-124 q2-125 q2-126 q2-127 q2-128 q2-129 q2-130 q2-131 q2-132 q2-133 q2-134 q2-137 q2-139 q2-140 q2-141 q2-142 q2-143 q2-145 q2-146 q2-147
 q3-041 q3-042 q3-044 q3-046 q3-047 q3-049 q3-050 q3-052 q3-053 q3-055 q3-056 q3-057 q3-058 q3-059 q3-060 q3-061 q3-062 q3-064 q3-065 q3-067 q3-068 q3-069 q3-071 q3-073 q3-074 q3-076 q3-077 q3-078 q3-079 q3-080 q3-102 q3-105 q3-107 q3-108 q3-109 q3-112 q3-115 q3-117
 q4-036 q4-037 q4-039 q4-041 q4-042 q4-044 q4-045 q4-047 q4-048 q4-049 q4-050 q4-051 q4-052 q4-054 q4-055 q4-056 q4-057 q4-059 q4-060 q4-061 q4-062 q4-063 q4-065 q4-066 q4-067 q4-068 q4-069 q4-071 q4-072 q4-073 q4-074 q4-075 q4-097 q4-102`.split(/\s+/);
-// Preserve the original criteria except q3-056, explicitly revised against the current PPT.
-// Its new requirements and revision migration are checked separately below.
+// Lock the reviewed plain-language answers and criteria. The r11 wording update
+// preserves rubric positions and meaning; q3-056's explicit revision is checked below.
 const unchangedEssayIds=baselineEssayIds.filter(id=>id!=='q3-056');
-const baselineCriteriaDigest='8d0dfee4558e740f09065680541d9a85893175f2c335c40b31cd5babb7eb956f';
+const baselineCriteriaDigest='bbca1f01878077f6300ca2f9a3ae304b2e4c3dc60c795a16d056cfc9376ae5ff';
 const essay={id:'hint-essay',chapter:1,conceptId:'hint-concept',type:'essay',revision:2,options:[],answer:'원인과 결과',rubric:['원인','결과']};
 const mcq={id:'hint-mcq',chapter:1,conceptId:'hint-concept',type:'mcq',options:[{text:'A'},{text:'B'}],answer:0};
 const fixtureQuestions=[essay,mcq],fixtureConcepts=[{id:'hint-concept',chapter:1}];
@@ -71,7 +71,7 @@ test('restored hint cannot smuggle a score and a revised question discards the o
  assert.deepEqual(study.sanitizeState(raw,[{...essay,revision:3}],fixtureConcepts).worksheet,{});
 });
 
-test('the other 126 original essay answers and criteria remain unchanged after lecture review',()=>{
+test('the 126 reviewed plain-language essay answers and criteria remain stable',()=>{
  const byId=new Map(questions.map(q=>[q.id,q]));
  assert.equal(unchangedEssayIds.length,126);
  const original=unchangedEssayIds.map(id=>{
@@ -79,7 +79,7 @@ test('the other 126 original essay answers and criteria remain unchanged after l
   return{id:q.id,answer:q.answer,rubric:q.rubric};
  });
  const digest=createHash('sha256').update(JSON.stringify(original)).digest('hex');
- assert.equal(digest,baselineCriteriaDigest,'Guides must explain existing criteria rather than silently change them.');
+ assert.equal(digest,baselineCriteriaDigest,'Essay wording or criteria changes require a new content review before updating this baseline.');
 });
 
 test('current SYN defense revisions align criteria and preserve old study records for reassessment',()=>{

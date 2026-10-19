@@ -13,6 +13,11 @@
   "inlineConcepts": 149,
   "changes": [
     {
+      "title": "정의부터 쉽게 외울 수 있게 설명 정리",
+      "description": "벼락치기 16주제와 1~4장 개념·문제 해설을 쉬운 문장으로 다듬었습니다. 정의를 먼저 쓰고 반복 설명과 긴 예시를 줄였습니다. 서술형 핵심어·과정 순서와 문항의 정답·기록 연결은 유지합니다.",
+      "questionIds": []
+    },
+    {
       "title": "기출 일치만으로 빠졌던 강의 핵심 네 주제 추가",
       "description": "AAA·식별·인증·인가, 웹 세션·쿠키, 무선 LAN 보안, 웹 인가·변조 입력·파일 접근을 추가해 총 16주제·32예상문항으로 압축했습니다. OS 권한과 스니핑은 기존 주제에 보강했습니다. 직접 기출과 강의 핵심의 선정 근거를 구분하고 기존 답안·암기 체크를 유지합니다.",
       "questionIds": []
@@ -285,5 +290,15 @@
       "catalogVersion": 2,
       "existingQuestionsPreserved": 24
     }
+  },
+  "plainLanguageReview": {
+    "release": "20261019-r11",
+    "conceptsReviewed": 149,
+    "questionsReviewed": 462,
+    "cramTopicsReviewed": 16,
+    "cramQuestionsReviewed": 32,
+    "newQuestions": 0,
+    "newTopics": 0,
+    "answerIndicesAndRecordIdsPreserved": true
   }
 }
