@@ -19,7 +19,19 @@ export function sanitizeCramState(raw,topics=[]){
  if(next.recall&&previousVersion<next.catalogVersion)next.hidden=[...new Set([...next.hidden,...topics.filter(t=>introduced(t)>previousVersion).flatMap(t=>t.questions.map(q=>q.id))])];
  return next;
 }
-export function emptyState(){return {version:1,attempts:{},bookmarks:[],learned:[],notes:{},worksheet:{},cram:emptyCramState(),exam:null,examHistory:[],theme:'light'};}
+export function emptyCramWorkbookState(){return {answers:{},revealed:[],hints:[],rubrics:{}};}
+export function sanitizeCramWorkbookState(raw,questions=[]){
+ const next=emptyCramWorkbookState();if(!raw||typeof raw!=='object'||Array.isArray(raw))return next;
+ const byId=new Map(questions.map(q=>[q.id,q]));
+ if(raw.answers&&typeof raw.answers==='object'&&!Array.isArray(raw.answers))for(const [id,value] of Object.entries(raw.answers))if(byId.has(id)&&typeof value==='string')next.answers[id]=value.slice(0,12000);
+ next.revealed=Array.isArray(raw.revealed)?[...new Set(raw.revealed.filter(id=>byId.has(id)))]:[];
+ next.hints=Array.isArray(raw.hints)?[...new Set(raw.hints.filter(id=>byId.get(id)?.type==='essay'))]:[];
+ if(raw.rubrics&&typeof raw.rubrics==='object'&&!Array.isArray(raw.rubrics))for(const [id,values] of Object.entries(raw.rubrics)){
+  const q=byId.get(id);if(q?.type==='essay'&&Array.isArray(values))next.rubrics[id]=[...new Set(values.filter(n=>Number.isInteger(n)&&n>=0&&n<q.rubric.length))];
+ }
+ return next;
+}
+export function emptyState(){return {version:1,attempts:{},bookmarks:[],learned:[],notes:{},worksheet:{},cram:emptyCramState(),cramWorkbook:emptyCramWorkbookState(),exam:null,examHistory:[],theme:'light'};}
 export function normalize(text){return String(text).normalize('NFKC').toLowerCase().replace(/(^|[\s,;:(])[-−–](?=\d)/gu,'$1음수').replace(/[\s\p{P}\p{S}]/gu,'');}
 export function normalizeCode(text,caseSensitive=false){
   const value=String(text).normalize('NFKC').replace(/[–—−]/g,'-').replace(/->/g,'→').replace(/<-/g,'←').trim().replace(/\s+/g,' ').replace(/\s*([→←])\s*/g,'$1');
@@ -58,7 +70,7 @@ export function acknowledgeRevision(exam,q){
   if(exam.revisionDrafts)delete exam.revisionDrafts[q.id];
 }
 export function shuffle(items, random=Math.random){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-export function sanitizeState(raw, questions, concepts, cramTopics=[]){
+export function sanitizeState(raw, questions, concepts, cramTopics=[],workbookQuestions=[]){
   if(!raw || raw.version!==1 || typeof raw!=='object') throw new Error('이 학습실의 기록 파일이 아닙니다.');
   const s=emptyState(), qs=new Set(questions.map(q=>q.id)), cs=new Set(concepts.map(c=>c.id)), questionMap=new Map(questions.map(q=>[q.id,q]));
   s.theme=raw.theme==='dark'?'dark':'light';
@@ -96,6 +108,7 @@ export function sanitizeState(raw, questions, concepts, cramTopics=[]){
   }
   if(raw.worksheet&&typeof raw.worksheet==='object'&&!Array.isArray(raw.worksheet))for(const [id,draft] of Object.entries(raw.worksheet))if(qs.has(id)){const value=sanitizeWorksheetDraft(questionMap.get(id),draft);if(value)s.worksheet[id]=value;}
   s.cram=sanitizeCramState(raw.cram,cramTopics);
+  s.cramWorkbook=sanitizeCramWorkbookState(raw.cramWorkbook,workbookQuestions);
   return s;
 }
 export function recordAttempt(state,q,answer,score,selfGraded=false){

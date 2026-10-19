@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "python -m http.server 4175 --bind 127.0.0.1",
-    "test": "node scripts/validate.mjs && node scripts/validate-cram.mjs && node --test tests/*.test.mjs",
+    "test": "node scripts/validate.mjs && node scripts/validate-cram.mjs && node scripts/validate-learning.mjs && node --test tests/*.test.mjs",
     "build": "node scripts/build.mjs"
   }
 }

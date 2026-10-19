@@ -1,6 +1,6 @@
 {
   "version": "20261019-r10",
-  "date": "2026-10-19",
+  "date": "2026-10-20",
   "reviewedFiles": 4,
   "reviewedSlides": 248,
   "baselineQuestions": 446,
@@ -12,6 +12,11 @@
   "essayWritingGuides": 133,
   "inlineConcepts": 149,
   "changes": [
+    {
+      "title": "이해 설명·PPT 원문·단답과 서술형 문제집",
+      "description": "16주제에 원리 설명·생활 예시·시험용 답안을 보완하고 단답80·서술48문항의 별도 문제집을 만들었습니다. 개념과 해설에서 PPT 실제 쪽의 원문·삽입 그림·발표자 노트를 펼쳐 볼 수 있습니다. 기존462문항과 벼락치기32문항 및 작성 기록을 유지합니다.",
+      "questionIds": []
+    },
     {
       "title": "정의부터 쉽게 외울 수 있게 설명 정리",
       "description": "벼락치기 16주제와 1~4장 개념·문제 해설을 쉬운 문장으로 다듬었습니다. 정의를 먼저 쓰고 반복 설명과 긴 예시를 줄였습니다. 서술형 핵심어·과정 순서와 문항의 정답·기록 연결은 유지합니다.",
@@ -289,6 +294,14 @@
       "maximumTopics": 16,
       "catalogVersion": 2,
       "existingQuestionsPreserved": 24
+    },
+    "teachingTopics": 16,
+    "workbook": {
+      "route": "#/cram-workbook",
+      "questions": 128,
+      "short": 80,
+      "essay": 48,
+      "questionsPerTopic": 8
     }
   },
   "plainLanguageReview": {
@@ -300,5 +313,16 @@
     "newQuestions": 0,
     "newTopics": 0,
     "answerIndicesAndRecordIdsPreserved": true
+  },
+  "sourceViewer": {
+    "slides": 248,
+    "embeddedFigures": 207,
+    "originalNotes": 69,
+    "routeLocations": [
+      "chapter concepts",
+      "question concept recaps",
+      "cram topics",
+      "workbook explanations"
+    ]
   }
 }
