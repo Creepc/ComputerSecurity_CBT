@@ -8,14 +8,15 @@ const chapters=[1,2,3,4].map(n=>read(`chapter${n}`)),cram=read('cram'),book=read
 const questions=chapters.flatMap(c=>c.questions),concepts=chapters.flatMap(c=>c.concepts),short=book.questions.find(q=>q.type==='short'),essay=book.questions.find(q=>q.type==='essay');
 async function boot(saved={},failure=null){
  const store={...saved},events={},updated=new Map(),writes=[],app={innerHTML:''},toast={textContent:'',classList:{add(){},remove(){}}};
+ const progress={textContent:''};
  const datasets={...Object.fromEntries(chapters.map(c=>[`chapter${c.chapter}.json`,c])),'cram.json':cram,'cram-workbook.json':book,'lecture-sources.json':lecture};
- const context=vm.createContext({__study:study,URLSearchParams,console,Date,Math,Number,Set,Map,JSON,String,Array,Object,Blob,URL,setTimeout:()=>0,clearTimeout(){},setInterval(){},location:{hash:'#/cram-workbook'},window:{scrollY:512,scrollTo(){},addEventListener(){},confirm(){return true}},document:{activeElement:null,documentElement:{dataset:{}},querySelector(s){if(s==='#app')return app;if(s==='#toast')return toast;return null},querySelectorAll(){return []},getElementById(id){if(!app.innerHTML.includes(`id="${id}"`))return null;return{scrollIntoView(){},set outerHTML(html){updated.set(id,html)}}},addEventListener(type,fn){events[type]=fn}},localStorage:{getItem(k){return store[k]||null},setItem(k,v){store[k]=v;writes.push(k)}},sessionStorage:{getItem(){return null}},fetch:async url=>{const key=String(url).split('/').at(-1).split('?')[0];if(key==='cram-workbook.json'&&failure){if(failure==='network')throw new Error('network failure');return{ok:failure!=='http',json:async()=>({questions:[]})}}return{ok:true,json:async()=>structuredClone(datasets[key]||{changes:[]})}}});
+ const context=vm.createContext({__study:study,URLSearchParams,console,Date,Math,Number,Set,Map,JSON,String,Array,Object,Blob,URL,setTimeout:()=>0,clearTimeout(){},setInterval(){},location:{hash:'#/cram-workbook'},window:{scrollY:512,scrollTo(){},addEventListener(){},confirm(){return true}},document:{activeElement:null,documentElement:{dataset:{}},querySelector(s){if(s==='#app')return app;if(s==='#toast')return toast;if(s==='.workbook-progress')return progress;return null},querySelectorAll(){return []},getElementById(id){if(!app.innerHTML.includes(`id="${id}"`))return null;return{scrollIntoView(){},set outerHTML(html){updated.set(id,html)}}},addEventListener(type,fn){events[type]=fn}},localStorage:{getItem(k){return store[k]||null},setItem(k,v){store[k]=v;writes.push(k)}},sessionStorage:{getItem(){return null}},fetch:async url=>{const key=String(url).split('/').at(-1).split('?')[0];if(key==='cram-workbook.json'&&failure){if(failure==='network')throw new Error('network failure');return{ok:failure!=='http',json:async()=>({questions:[]})}}return{ok:true,json:async()=>structuredClone(datasets[key]||{changes:[]})}}});
  const source=fs.readFileSync(new URL('../app.js',import.meta.url),'utf8');
  vm.runInContext(source.replace(/^import \{([^}]+)\} from [^;]+;/,'const {$1}=__study;').replace(/init\(\);\s*$/,'globalThis.bootPromise=init();'),context);await context.bootPromise;
  const run=code=>vm.runInContext(code,context),readRoute=hash=>{context.location.hash=hash;run('readRoute()');return app.innerHTML;};
  const click=(action,id,value,index,checked)=>events.click({target:{closest(){return{dataset:{action,id,value,index},checked}}},preventDefault(){}});
  const input=(id,value)=>events.input({target:{dataset:{input:'workbook-answer',id},value}});
- return{run,read:readRoute,click,input,store,events,updated,writes,app};
+ return{run,read:readRoute,click,input,store,events,updated,writes,app,progress};
 }
 const json=(env,code)=>JSON.parse(env.run(`JSON.stringify(${code})`));
 
@@ -66,6 +67,30 @@ test('chapter and type filters show every matching question and preserve other d
  assert.equal((env.app.innerHTML.match(/class="surface workbook-question"/g)||[]).length,18);
  env.click('wb-show-visible');assert.equal(json(env,'state.cramWorkbook.revealed').length,19);env.click('wb-hide-visible');assert.deepEqual(json(env,'state.cramWorkbook.revealed'),[short.id]);
  assert.equal(env.run(`state.cramWorkbook.answers[${JSON.stringify(short.id)}]`),'보존할 답');
+});
+
+test('short-only route shows 80 consecutive questions and preserves shared answers across routes',async()=>{
+ const env=await boot();env.input(short.id,'기밀성');env.input(essay.id,'보존할 서술 답안');env.click('wb-hint',essay.id);env.click('wb-reveal',essay.id);env.click('wb-rubric',essay.id,undefined,'0',true);
+ env.events.change({target:{dataset:{workbookFilter:'type'},value:'essay'}});
+ const before=env.run('JSON.stringify(state.cramWorkbook)'),html=env.read('#/cram-short');
+ assert.match(html,/벼락치기 단답형 문제집/);assert.match(html,/작성 1 \/ 80문항/);assert.ok(!html.includes('id="workbook-type"'));
+ const displayed=[...html.matchAll(/class="surface workbook-question" id="([^"]+)"/g)].map(m=>m[1]);
+ assert.deepEqual(displayed,book.questions.filter(q=>q.type==='short').map(q=>q.id));
+ assert.deepEqual([...html.matchAll(/class="workbook-number">(\d+)</g)].map(m=>Number(m[1])),Array.from({length:80},(_,i)=>i+1));
+ assert.ok(!html.includes('data-action="wb-hint"'));assert.ok(!html.includes('data-action="wb-rubric"'));assert.equal(env.run('JSON.stringify(state.cramWorkbook)'),before);
+ assert.equal(env.run('questions.length'),462);assert.equal(env.run('workbookQuestions().length'),128);
+ env.input(short.id,'무결성');assert.match(env.progress.textContent,/작성 1 \/ 80문항/);
+ const mixed=env.read('#/cram-workbook');assert.equal((mixed.match(/class="surface workbook-question"/g)||[]).length,128);assert.ok(mixed.includes('무결성'));assert.ok(mixed.includes('보존할 서술 답안'));
+ const restored=await boot(env.store);assert.equal(restored.run(`state.cramWorkbook.answers['${short.id}']`),'무결성');assert.deepEqual(json(restored,`state.cramWorkbook.rubrics['${essay.id}']`),[0]);
+});
+
+test('short workbook chapter and topic controls scope bulk reveals without touching essay records',async()=>{
+ const env=await boot();env.input(essay.id,'서술 기록');env.click('wb-hint',essay.id);env.click('wb-reveal',essay.id);env.click('wb-rubric',essay.id,undefined,'0',true);env.read('#/cram-short');
+ env.click('wb-chapter',undefined,'3');assert.equal((env.app.innerHTML.match(/class="surface workbook-question"/g)||[]).length,30);
+ env.events.change({target:{dataset:{workbookFilter:'topic'},value:'cram-15'}});assert.equal((env.app.innerHTML.match(/class="surface workbook-question"/g)||[]).length,5);
+ env.click('wb-show-visible');assert.deepEqual(json(env,'state.cramWorkbook.revealed'),[essay.id,...book.questions.filter(q=>q.topicId==='cram-15'&&q.type==='short').map(q=>q.id)]);
+ env.click('wb-hide-visible');assert.deepEqual(json(env,'state.cramWorkbook.revealed'),[essay.id]);assert.deepEqual(json(env,'state.cramWorkbook.hints'),[essay.id]);assert.deepEqual(json(env,`state.cramWorkbook.rubrics['${essay.id}']`),[0]);assert.equal(env.run(`state.cramWorkbook.answers['${essay.id}']`),'서술 기록');
+ env.click('wb-chapter',undefined,'all');env.click('wb-show-visible');assert.equal(json(env,'state.cramWorkbook.revealed').length,81);env.click('wb-hide-visible');assert.deepEqual(json(env,'state.cramWorkbook.revealed'),[essay.id]);
 });
 
 test('invalid actions cannot change records or mark hidden answers',async()=>{
